@@ -1,0 +1,4 @@
+project_id = "gbcqyujrnhofmfuhuelt"
+
+[functions.detect-ingredients]
+verify_jwt = false

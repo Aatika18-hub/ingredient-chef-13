@@ -1,0 +1,21 @@
+import { ScannerInterface } from "./ScannerInterface";
+
+export const Hero = () => {
+  return (
+    <section className="gradient-hero text-white py-20">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-5xl md:text-6xl font-bold mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          Scan. Cook. Enjoy.
+        </h2>
+        <p className="text-xl mb-12 max-w-2xl mx-auto opacity-95 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-150">
+          Discover amazing recipes by scanning your ingredients. CookScan turns
+          your kitchen staples into culinary masterpieces.
+        </p>
+
+        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+          <ScannerInterface />
+        </div>
+      </div>
+    </section>
+  );
+};
