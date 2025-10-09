@@ -1,4 +1,8 @@
+import { useState } from "react";
 import { ScannerInterface } from "./ScannerInterface";
+import { BrowserMLScanner } from "./BrowserMLScanner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Cloud, Zap } from "lucide-react";
 
 export const Hero = () => {
   return (
@@ -13,7 +17,26 @@ export const Hero = () => {
         </p>
 
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-          <ScannerInterface />
+          <Tabs defaultValue="browser" className="w-full">
+            <TabsList className="mb-6 bg-white/10 backdrop-blur-sm">
+              <TabsTrigger value="browser" className="gap-2">
+                <Zap className="w-4 h-4" />
+                Browser AI (Fast & Offline)
+              </TabsTrigger>
+              <TabsTrigger value="cloud" className="gap-2">
+                <Cloud className="w-4 h-4" />
+                Cloud AI (Accurate)
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="browser">
+              <BrowserMLScanner />
+            </TabsContent>
+            
+            <TabsContent value="cloud">
+              <ScannerInterface />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </section>
