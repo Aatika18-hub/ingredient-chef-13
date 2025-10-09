@@ -1,14 +1,17 @@
 import { useState, useRef } from "react";
-import { Camera, Upload, Loader2 } from "lucide-react";
+import { Camera, Upload, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { classifyIngredient } from "@/lib/browserScanner";
 
 export const ScannerInterface = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [detectedIngredients, setDetectedIngredients] = useState<string[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [useBrowserML, setUseBrowserML] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
 
   const handleImageUpload = async (file: File) => {
@@ -21,39 +24,66 @@ export const ScannerInterface = () => {
     reader.readAsDataURL(file);
 
     try {
-      // Convert file to base64
-      const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64String = reader.result as string;
-          resolve(base64String);
+      if (useBrowserML) {
+        // Use browser-based ML model
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            const ingredients = await classifyIngredient(img);
+            setDetectedIngredients(ingredients);
+            toast({
+              title: "Ingredients detected (Browser ML)!",
+              description: `Found ${ingredients.length} ingredient(s) offline`,
+            });
+          } catch (error) {
+            console.error('Browser ML error:', error);
+            toast({
+              title: "Browser ML unavailable",
+              description: "Falling back to cloud AI...",
+              variant: "destructive",
+            });
+            // Fallback to cloud AI
+            await processWithCloudAI(file);
+          } finally {
+            setIsScanning(false);
+          }
         };
-        reader.readAsDataURL(file);
-      });
-
-      // Call edge function to detect ingredients
-      const { data, error } = await supabase.functions.invoke('detect-ingredients', {
-        body: { image: base64 }
-      });
-
-      if (error) throw error;
-
-      if (data?.ingredients) {
-        setDetectedIngredients(data.ingredients);
-        toast({
-          title: "Ingredients detected!",
-          description: `Found ${data.ingredients.length} ingredient(s)`,
-        });
+        img.src = URL.createObjectURL(file);
+      } else {
+        // Use cloud AI
+        await processWithCloudAI(file);
+        setIsScanning(false);
       }
     } catch (error) {
-      console.error('Error detecting ingredients:', error);
-      toast({
-        title: "Error",
-        description: "Failed to detect ingredients. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+      console.error('Error processing image:', error);
       setIsScanning(false);
+    }
+  };
+
+  const processWithCloudAI = async (file: File) => {
+    // Convert file to base64
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        resolve(base64String);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Call edge function to detect ingredients
+    const { data, error } = await supabase.functions.invoke('detect-ingredients', {
+      body: { image: base64 }
+    });
+
+    if (error) throw error;
+
+    if (data?.ingredients) {
+      setDetectedIngredients(data.ingredients);
+      toast({
+        title: "Ingredients detected (Cloud AI)!",
+        description: `Found ${data.ingredients.length} ingredient(s)`,
+      });
     }
   };
 
@@ -79,7 +109,7 @@ export const ScannerInterface = () => {
       <div className="bg-muted rounded-xl p-4 mb-6">
         <div className="border-2 border-dashed border-border rounded-lg h-48 flex items-center justify-center overflow-hidden">
           {previewUrl ? (
-            <img src={previewUrl} alt="Preview" className="max-h-full max-w-full object-contain" />
+            <img ref={imageRef} src={previewUrl} alt="Preview" className="max-h-full max-w-full object-contain" />
           ) : (
             <div className="text-center">
               <Camera className="text-muted-foreground w-12 h-12 mx-auto mb-2" />
@@ -87,6 +117,19 @@ export const ScannerInterface = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useBrowserML}
+            onChange={(e) => setUseBrowserML(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <Zap className="w-4 h-4 text-primary" />
+          <span className="text-sm text-foreground">Use Offline Mode (Browser ML)</span>
+        </label>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
