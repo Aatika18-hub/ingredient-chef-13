@@ -45,12 +45,17 @@ export const RecipeCard = ({
       className="cursor-pointer transition-all duration-300 hover:-translate-y-2 shadow-card hover:shadow-card-hover overflow-hidden group"
       onClick={onClick}
     >
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
         <img
           src={imageUrl}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80';
+            target.onerror = null;
+          }}
         />
         <div className="absolute top-3 right-3">
           <Badge className={getDifficultyColor(difficulty)}>{difficulty}</Badge>
