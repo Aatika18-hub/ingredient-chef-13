@@ -14,6 +14,25 @@ export const ScannerInterface = () => {
   const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
 
+  const compressImageToBase64 = (file: File, maxDim = 1024, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas not supported'));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleImageUpload = async (file: File) => {
     setIsScanning(true);
     setDetectedIngredients([]);
@@ -61,15 +80,9 @@ export const ScannerInterface = () => {
   };
 
   const processWithCloudAI = async (file: File) => {
-    // Convert file to base64
-    const base64 = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        resolve(base64String);
-      };
-      reader.readAsDataURL(file);
-    });
+    // Convert and compress to base64 for faster upload
+    toast({ title: "Optimizing image...", description: "Compressing for faster detection" });
+    const base64 = await compressImageToBase64(file, 1024, 0.8);
 
     // Call edge function to detect ingredients
     const { data, error } = await supabase.functions.invoke('detect-ingredients', {

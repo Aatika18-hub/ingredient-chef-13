@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Loader2, Zap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,6 +15,7 @@ export const BrowserMLScanner = () => {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [modelLoaded, setModelLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const classifierRef = useRef<any>(null);
   const { toast } = useToast();
 
   const analyzeImageWithML = async (imageFile: File) => {
@@ -34,12 +35,24 @@ export const BrowserMLScanner = () => {
 
       setIsModelLoading(true);
 
-      // Use a lightweight, faster model for quick detection
-      const classifier = await pipeline(
-        'zero-shot-classification',
-        'Xenova/distilbert-base-uncased-mnli',
-        { device: 'wasm' } // Use WASM for better compatibility and speed
-      );
+      const getClassifier = async () => {
+        try {
+          return await pipeline(
+            'image-classification',
+            'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k',
+            { device: 'webgpu' }
+          );
+        } catch {
+          // Fallback to WASM if WebGPU unsupported
+          return await pipeline(
+            'image-classification',
+            'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k',
+            { device: 'wasm' }
+          );
+        }
+      };
+
+      const classifier = await getClassifier();
 
       setModelLoaded(true);
       setIsModelLoading(false);
@@ -49,24 +62,28 @@ export const BrowserMLScanner = () => {
         description: "Using AI to detect ingredients",
       });
 
-      // Common ingredient categories for faster classification
-      const ingredientCategories = [
-        'tomato', 'onion', 'garlic', 'potato', 'carrot', 'pepper',
-        'chicken', 'beef', 'fish', 'egg', 'cheese', 'pasta', 'rice',
-        'apple', 'banana', 'mushroom', 'spinach', 'cucumber'
-      ];
+      // Resize image to 224x224 for fast inference
+      const resizedDataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 224; canvas.height = 224;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('Canvas not supported'));
+          ctx.drawImage(img, 0, 0, 224, 224);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(imageFile);
+      });
 
-      // Since we're using a text classifier, we'll do a quick generic classification
-      const result: any = await classifier(
-        'ingredients in this food image',
-        ingredientCategories,
-        { multi_label: true }
-      );
+      const results: any[] = await classifier(resizedDataUrl);
 
-      // Get top 3-5 results with decent confidence
-      const ingredients = (result.labels || [])
+      // Extract top predictions as ingredients
+      const ingredients = (results || [])
         .slice(0, 5)
-        .filter((_: string, idx: number) => (result.scores?.[idx] || 0) > 0.15);
+        .filter((r: any) => (r.score ?? 0) > 0.15)
+        .map((r: any) => String(r.label).replace(/_/g, ' '));
 
       setDetectedIngredients(ingredients.length > 0 ? ingredients : ['mixed ingredients']);
       
@@ -86,6 +103,40 @@ export const BrowserMLScanner = () => {
       setIsModelLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Preload model on mount and perform a tiny warm-up to reduce first-run latency
+    (async () => {
+      try {
+        setIsModelLoading(true);
+        const getClassifier = async () => {
+          try {
+            return await pipeline(
+              'image-classification',
+              'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k',
+              { device: 'webgpu' }
+            );
+          } catch {
+            return await pipeline(
+              'image-classification',
+              'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k',
+              { device: 'wasm' }
+            );
+          }
+        };
+        classifierRef.current = await getClassifier();
+        // Warm-up with a blank image
+        const canvas = document.createElement('canvas');
+        canvas.width = 224; canvas.height = 224;
+        await classifierRef.current(canvas.toDataURL('image/jpeg', 0.5));
+        setModelLoaded(true);
+      } catch (e) {
+        console.warn('Model preload failed (will load on demand):', e);
+      } finally {
+        setIsModelLoading(false);
+      }
+    })();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
