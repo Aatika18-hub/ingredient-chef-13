@@ -17,24 +17,24 @@ export const Hero = () => {
         </p>
 
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-          <Tabs defaultValue="browser" className="w-full">
+          <Tabs defaultValue="cloud" className="w-full">
             <TabsList className="mb-6 bg-white/10 backdrop-blur-sm">
-              <TabsTrigger value="browser" className="gap-2">
-                <Zap className="w-4 h-4" />
-                Browser AI (Fast & Offline)
-              </TabsTrigger>
               <TabsTrigger value="cloud" className="gap-2">
                 <Cloud className="w-4 h-4" />
-                Cloud AI (Accurate)
+                Cloud AI (Fast & Accurate)
+              </TabsTrigger>
+              <TabsTrigger value="browser" className="gap-2">
+                <Zap className="w-4 h-4" />
+                Browser AI (Offline)
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="browser">
-              <BrowserMLScanner />
-            </TabsContent>
-            
             <TabsContent value="cloud">
               <ScannerInterface />
+            </TabsContent>
+            
+            <TabsContent value="browser">
+              <BrowserMLScanner />
             </TabsContent>
           </Tabs>
         </div>
