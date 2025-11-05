@@ -4,7 +4,11 @@ import { BrowserMLScanner } from "./BrowserMLScanner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Cloud, Zap } from "lucide-react";
 
-export const Hero = () => {
+interface HeroProps {
+  onIngredientsDetected: (ingredients: string[]) => void;
+}
+
+export const Hero = ({ onIngredientsDetected }: HeroProps) => {
   return (
     <section className="gradient-hero text-white py-20">
       <div className="container mx-auto px-4 text-center">
@@ -30,11 +34,11 @@ export const Hero = () => {
             </TabsList>
             
             <TabsContent value="cloud">
-              <ScannerInterface />
+              <ScannerInterface onIngredientsDetected={onIngredientsDetected} />
             </TabsContent>
             
             <TabsContent value="browser">
-              <BrowserMLScanner />
+              <BrowserMLScanner onIngredientsDetected={onIngredientsDetected} />
             </TabsContent>
           </Tabs>
         </div>

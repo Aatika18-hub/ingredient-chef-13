@@ -8,7 +8,11 @@ import { pipeline, env } from '@huggingface/transformers';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-export const BrowserMLScanner = () => {
+interface BrowserMLScannerProps {
+  onIngredientsDetected: (ingredients: string[]) => void;
+}
+
+export const BrowserMLScanner = ({ onIngredientsDetected }: BrowserMLScannerProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [detectedIngredients, setDetectedIngredients] = useState<string[]>([]);
@@ -86,6 +90,7 @@ export const BrowserMLScanner = () => {
         .map((r: any) => String(r.label).replace(/_/g, ' '));
 
       setDetectedIngredients(ingredients.length > 0 ? ingredients : ['mixed ingredients']);
+      onIngredientsDetected(ingredients.length > 0 ? ingredients : ['mixed ingredients']);
       
       toast({
         title: "Detection complete!",

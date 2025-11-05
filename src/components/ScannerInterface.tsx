@@ -5,7 +5,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { classifyIngredient } from "@/lib/browserScanner";
 
-export const ScannerInterface = () => {
+interface ScannerInterfaceProps {
+  onIngredientsDetected: (ingredients: string[]) => void;
+}
+
+export const ScannerInterface = ({ onIngredientsDetected }: ScannerInterfaceProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const [detectedIngredients, setDetectedIngredients] = useState<string[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -50,6 +54,7 @@ export const ScannerInterface = () => {
           try {
             const ingredients = await classifyIngredient(img);
             setDetectedIngredients(ingredients);
+            onIngredientsDetected(ingredients);
             toast({
               title: "Ingredients detected (Browser ML)!",
               description: `Found ${ingredients.length} ingredient(s) offline`,
@@ -93,6 +98,7 @@ export const ScannerInterface = () => {
 
     if (data?.ingredients) {
       setDetectedIngredients(data.ingredients);
+      onIngredientsDetected(data.ingredients);
       toast({
         title: "Ingredients detected (Cloud AI)!",
         description: `Found ${data.ingredients.length} ingredient(s)`,
