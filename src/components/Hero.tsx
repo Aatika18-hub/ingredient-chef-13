@@ -22,25 +22,17 @@ export const Hero = ({ onIngredientsDetected }: HeroProps) => {
         </p>
 
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-          <Tabs defaultValue="manual" className="w-full">
+          <Tabs defaultValue="cloud" className="w-full">
             <TabsList className="mb-6 bg-white/10 backdrop-blur-sm">
-              <TabsTrigger value="manual" className="gap-2">
-                <PenLine className="w-4 h-4" />
-                Type Ingredients
-              </TabsTrigger>
               <TabsTrigger value="cloud" className="gap-2">
                 <Cloud className="w-4 h-4" />
-                Cloud AI Scan
+                Upload & Scan Image
               </TabsTrigger>
               <TabsTrigger value="browser" className="gap-2">
                 <Zap className="w-4 h-4" />
-                Browser AI Scan
+                Offline Scan
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="manual">
-              <ManualIngredientInput onIngredientsDetected={onIngredientsDetected} />
-            </TabsContent>
             
             <TabsContent value="cloud">
               <ScannerInterface onIngredientsDetected={onIngredientsDetected} />
