@@ -37,12 +37,35 @@ export const MatchedRecipes = ({ detectedIngredients }: MatchedRecipesProps) => 
 
       if (error) throw error;
 
+      // Helper function to check if ingredients match
+      const ingredientsMatch = (recipeIngredient: string, detectedIngredient: string): boolean => {
+        const recipeLower = recipeIngredient.toLowerCase();
+        const detectedLower = detectedIngredient.toLowerCase();
+        
+        // Direct substring match (covers cases like "chicken" in "800g chicken breast")
+        if (recipeLower.includes(detectedLower) || detectedLower.includes(recipeLower)) {
+          return true;
+        }
+        
+        // Word-level matching for better accuracy
+        const recipeWords = recipeLower.split(/[\s,]+/);
+        const detectedWords = detectedLower.split(/[\s,]+/);
+        
+        // Check if any significant words match (ignore common words)
+        const ignoreWords = ['and', 'or', 'with', 'of', 'the', 'a', 'an'];
+        const recipeSignificant = recipeWords.filter(w => w.length > 2 && !ignoreWords.includes(w));
+        const detectedSignificant = detectedWords.filter(w => w.length > 2 && !ignoreWords.includes(w));
+        
+        return recipeSignificant.some(rw => 
+          detectedSignificant.some(dw => rw.includes(dw) || dw.includes(rw))
+        );
+      };
+
       // Filter recipes that contain any of the detected ingredients
       const matchedRecipes = (data as Recipe[]).filter((recipe) =>
         recipe.ingredients.some((ingredient) =>
           detectedIngredients.some((detected) =>
-            ingredient.toLowerCase().includes(detected.toLowerCase()) ||
-            detected.toLowerCase().includes(ingredient.toLowerCase())
+            ingredientsMatch(ingredient, detected)
           )
         )
       );
@@ -50,16 +73,10 @@ export const MatchedRecipes = ({ detectedIngredients }: MatchedRecipesProps) => 
       // Sort by number of matching ingredients (most matches first)
       return matchedRecipes.sort((a, b) => {
         const aMatches = a.ingredients.filter((ing) =>
-          detectedIngredients.some((det) => 
-            ing.toLowerCase().includes(det.toLowerCase()) ||
-            det.toLowerCase().includes(ing.toLowerCase())
-          )
+          detectedIngredients.some((det) => ingredientsMatch(ing, det))
         ).length;
         const bMatches = b.ingredients.filter((ing) =>
-          detectedIngredients.some((det) => 
-            ing.toLowerCase().includes(det.toLowerCase()) ||
-            det.toLowerCase().includes(ing.toLowerCase())
-          )
+          detectedIngredients.some((det) => ingredientsMatch(ing, det))
         ).length;
         return bMatches - aMatches;
       });
