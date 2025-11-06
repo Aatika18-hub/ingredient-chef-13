@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ScannerInterface } from "./ScannerInterface";
 import { BrowserMLScanner } from "./BrowserMLScanner";
+import { ManualIngredientInput } from "./ManualIngredientInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cloud, Zap } from "lucide-react";
+import { Cloud, Zap, PenLine } from "lucide-react";
 
 interface HeroProps {
   onIngredientsDetected: (ingredients: string[]) => void;
@@ -21,17 +22,25 @@ export const Hero = ({ onIngredientsDetected }: HeroProps) => {
         </p>
 
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-          <Tabs defaultValue="cloud" className="w-full">
+          <Tabs defaultValue="manual" className="w-full">
             <TabsList className="mb-6 bg-white/10 backdrop-blur-sm">
+              <TabsTrigger value="manual" className="gap-2">
+                <PenLine className="w-4 h-4" />
+                Type Ingredients
+              </TabsTrigger>
               <TabsTrigger value="cloud" className="gap-2">
                 <Cloud className="w-4 h-4" />
-                Cloud AI (Fast & Accurate)
+                Cloud AI Scan
               </TabsTrigger>
               <TabsTrigger value="browser" className="gap-2">
                 <Zap className="w-4 h-4" />
-                Browser AI (Offline)
+                Browser AI Scan
               </TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="manual">
+              <ManualIngredientInput onIngredientsDetected={onIngredientsDetected} />
+            </TabsContent>
             
             <TabsContent value="cloud">
               <ScannerInterface onIngredientsDetected={onIngredientsDetected} />
