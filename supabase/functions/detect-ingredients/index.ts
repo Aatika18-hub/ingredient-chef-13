@@ -28,18 +28,18 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
-            content: "You are a food recognition expert. Analyze images and identify all edible ingredients visible. Return only a JSON array of ingredient names, nothing else. Example: [\"tomato\", \"cheese\", \"basil\"]"
+            content: "You are an expert food ingredient recognition system. Your task is to carefully analyze images and identify ALL visible food ingredients with high accuracy. Be specific and precise. Do not guess or add ingredients that are not clearly visible. Return ONLY a JSON array of ingredient names."
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "What ingredients can you identify in this image? Return only a JSON array of ingredient names."
+                text: "Carefully examine this image and identify ALL visible food ingredients. Look closely at:\n- Raw vegetables and fruits\n- Proteins (meat, fish, eggs, tofu)\n- Grains and starches\n- Dairy products\n- Herbs and spices\n- Other edible items\n\nBe specific (e.g., 'cherry tomatoes' not just 'tomatoes', 'red bell pepper' not just 'pepper').\nReturn ONLY a JSON array format: [\"ingredient1\", \"ingredient2\", ...]\nDo not include any other text or explanation."
               },
               {
                 type: "image_url",
