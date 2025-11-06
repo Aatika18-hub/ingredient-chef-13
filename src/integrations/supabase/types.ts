@@ -16,48 +16,60 @@ export type Database = {
     Tables: {
       recipes: {
         Row: {
+          calories: number | null
+          carbohydrates: number | null
           category: string
           cook_time: number | null
           created_at: string
           description: string | null
           difficulty: string | null
+          fats: number | null
           id: string
           image_url: string | null
           ingredients: string[]
           instructions: string[]
           prep_time: number | null
+          protein: number | null
           servings: number | null
           tags: string[] | null
           title: string
           updated_at: string
         }
         Insert: {
+          calories?: number | null
+          carbohydrates?: number | null
           category: string
           cook_time?: number | null
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          fats?: number | null
           id?: string
           image_url?: string | null
           ingredients: string[]
           instructions: string[]
           prep_time?: number | null
+          protein?: number | null
           servings?: number | null
           tags?: string[] | null
           title: string
           updated_at?: string
         }
         Update: {
+          calories?: number | null
+          carbohydrates?: number | null
           category?: string
           cook_time?: number | null
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          fats?: number | null
           id?: string
           image_url?: string | null
           ingredients?: string[]
           instructions?: string[]
           prep_time?: number | null
+          protein?: number | null
           servings?: number | null
           tags?: string[] | null
           title?: string
