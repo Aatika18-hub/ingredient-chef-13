@@ -19,6 +19,10 @@ interface Recipe {
   ingredients: string[];
   instructions: string[];
   tags: string[];
+  protein?: number;
+  carbohydrates?: number;
+  fats?: number;
+  calories?: number;
 }
 
 export const RecipeGrid = () => {
@@ -88,6 +92,8 @@ export const RecipeGrid = () => {
                 difficulty={recipe.difficulty}
                 category={recipe.category}
                 tags={recipe.tags}
+                calories={recipe.calories}
+                protein={recipe.protein}
                 onClick={() => setSelectedRecipe(recipe)}
               />
             ))}

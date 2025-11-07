@@ -21,6 +21,10 @@ interface Recipe {
   ingredients: string[];
   instructions: string[];
   tags: string[];
+  protein?: number;
+  carbohydrates?: number;
+  fats?: number;
+  calories?: number;
 }
 
 interface RecipeModalProps {
@@ -99,6 +103,38 @@ export const RecipeModal = ({ recipe, isOpen, onClose }: RecipeModalProps) => {
               </div>
             </div>
           </div>
+
+          {(recipe.calories || recipe.protein || recipe.carbohydrates || recipe.fats) && (
+            <div className="bg-muted/50 rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-semibold mb-3">Nutrition Facts (per serving)</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {recipe.calories && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{recipe.calories}</div>
+                    <div className="text-sm text-muted-foreground">Calories</div>
+                  </div>
+                )}
+                {recipe.protein && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{recipe.protein}g</div>
+                    <div className="text-sm text-muted-foreground">Protein</div>
+                  </div>
+                )}
+                {recipe.carbohydrates && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{recipe.carbohydrates}g</div>
+                    <div className="text-sm text-muted-foreground">Carbs</div>
+                  </div>
+                )}
+                {recipe.fats && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{recipe.fats}g</div>
+                    <div className="text-sm text-muted-foreground">Fats</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-3">Ingredients</h3>

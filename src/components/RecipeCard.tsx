@@ -12,6 +12,8 @@ interface RecipeCardProps {
   difficulty: string;
   category: string;
   tags: string[];
+  calories?: number;
+  protein?: number;
   onClick: () => void;
 }
 
@@ -25,6 +27,8 @@ export const RecipeCard = ({
   difficulty,
   category,
   tags,
+  calories,
+  protein,
   onClick,
 }: RecipeCardProps) => {
   const getDifficultyColor = (diff: string) => {
@@ -98,6 +102,25 @@ export const RecipeCard = ({
             </Badge>
           )}
         </div>
+
+        {(calories || protein) && (
+          <div className="flex gap-4 mt-4 pt-4 border-t border-border text-sm">
+            {calories && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">🔥</span>
+                <span className="font-semibold">{calories}</span>
+                <span className="text-muted-foreground text-xs">cal</span>
+              </div>
+            )}
+            {protein && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">💪</span>
+                <span className="font-semibold">{protein}g</span>
+                <span className="text-muted-foreground text-xs">protein</span>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
