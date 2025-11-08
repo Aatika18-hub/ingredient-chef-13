@@ -49,15 +49,44 @@ export const RecipeModal = ({ recipe, isOpen, onClose }: RecipeModalProps) => {
     }
   };
 
+  const getFallbackImage = (cat: string, _title: string) => {
+    const c = (cat || '').toLowerCase();
+    const map: Record<string, string> = {
+      dessert: '/images/categories/dessert.jpg',
+      salad: '/images/categories/salad.jpg',
+      soup: '/images/categories/soup.jpg',
+      breakfast: '/images/categories/breakfast.jpg',
+      beverage: '/images/categories/beverage.jpg',
+      drink: '/images/categories/beverage.jpg',
+      bread: '/images/categories/bread.jpg',
+      pasta: '/images/categories/pasta.jpg',
+      seafood: '/images/categories/seafood.jpg',
+      vegan: '/images/categories/vegan.jpg',
+      main: '/images/categories/main.jpg',
+      entree: '/images/categories/main.jpg',
+    };
+    return map[c] || '/images/categories/main.jpg';
+  };
+
+  const displayImageUrl = recipe.image_url && recipe.image_url.trim() !== ''
+    ? recipe.image_url
+    : getFallbackImage(recipe.category, recipe.title);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         <div className="relative">
           <div className="h-64 w-full overflow-hidden rounded-t-lg">
             <img
-              src={recipe.image_url}
-              alt={recipe.title}
+              src={displayImageUrl}
+              alt={`${recipe.title} - ${recipe.category} recipe photo`}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = getFallbackImage(recipe.category, recipe.title);
+                target.onerror = null;
+              }}
             />
           </div>
           <div className="absolute top-4 right-4 flex gap-2">

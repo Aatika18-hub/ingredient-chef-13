@@ -44,6 +44,27 @@ export const RecipeCard = ({
     }
   };
 
+  const getFallbackImage = (cat: string, _title: string) => {
+    const c = (cat || '').toLowerCase();
+    const map: Record<string, string> = {
+      dessert: '/images/categories/dessert.jpg',
+      salad: '/images/categories/salad.jpg',
+      soup: '/images/categories/soup.jpg',
+      breakfast: '/images/categories/breakfast.jpg',
+      beverage: '/images/categories/beverage.jpg',
+      drink: '/images/categories/beverage.jpg',
+      bread: '/images/categories/bread.jpg',
+      pasta: '/images/categories/pasta.jpg',
+      seafood: '/images/categories/seafood.jpg',
+      vegan: '/images/categories/vegan.jpg',
+      main: '/images/categories/main.jpg',
+      entree: '/images/categories/main.jpg',
+    };
+    return map[c] || '/images/categories/main.jpg';
+  };
+
+  const displayImageUrl = imageUrl && imageUrl.trim() !== '' ? imageUrl : getFallbackImage(category, title);
+
   return (
     <Card
       className="cursor-pointer transition-all duration-300 hover:-translate-y-2 shadow-card hover:shadow-card-hover overflow-hidden group"
@@ -51,13 +72,13 @@ export const RecipeCard = ({
     >
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
         <img
-          src={imageUrl}
-          alt={title}
+          src={displayImageUrl}
+          alt={`${title} - ${category} recipe photo`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80';
+            target.src = getFallbackImage(category, title);
             target.onerror = null;
           }}
         />
