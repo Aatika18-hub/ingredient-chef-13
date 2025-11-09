@@ -2,3 +2,6 @@ project_id = "gbcqyujrnhofmfuhuelt"
 
 [functions.detect-ingredients]
 verify_jwt = false
+
+[functions.fix_recipe_images]
+verify_jwt = false
