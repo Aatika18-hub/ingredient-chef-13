@@ -41,40 +41,64 @@ export const MatchedRecipes = ({ detectedIngredients }: MatchedRecipesProps) => 
 
       if (error) throw error;
 
-      // Normalize ingredient names for better matching
+      // Normalize and tokenize ingredient names for strict matching
       const normalizeIngredient = (ingredient: string): string => {
         return ingredient
           .toLowerCase()
-          .replace(/[^\w\s]/g, '') // Remove punctuation
-          .replace(/\b(chopped|diced|sliced|minced|grated|fresh|dried|ground|whole)\b/g, '') // Remove common modifiers
-          .replace(/\b\d+\s*(g|kg|ml|l|cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|tbsp|tsp|oz|lb)\b/g, '') // Remove measurements
+          .replace(/[^\w\s-]/g, '') // Remove punctuation except hyphens
+          .replace(/\b(chopped|diced|sliced|minced|grated|fresh|dried|ground|whole|large|small|medium|optional)\b/g, '') // Remove common modifiers
+          .replace(/\b\d+\s*(g|kg|mg|ml|l|cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|tbsp|tsp|oz|lb|pound|pounds)\b/g, '') // Remove measurements
           .replace(/\s+/g, ' ') // Normalize spaces
           .trim();
       };
 
-      // Helper function to check if ingredients match
+      const singularize = (word: string): string => {
+        if (word.endsWith('ies')) return word.slice(0, -3) + 'y';
+        if (word.endsWith('es') && word.length > 4) return word.slice(0, -2);
+        if (word.endsWith('s') && word.length > 3) return word.slice(0, -1);
+        return word;
+      };
+
+      const canonicalize = (word: string): string => {
+        const map: Record<string, string> = {
+          chilli: 'chili', chile: 'chili', chilies: 'chili',
+          coriander: 'cilantro',
+          brinjal: 'eggplant', aubergine: 'eggplant',
+          garbanzo: 'chickpea', garbanzoes: 'chickpea', chickpeas: 'chickpea',
+          yogurt: 'yoghurt', curd: 'yoghurt',
+          capsicum: 'bell-pepper', 'bell': 'bell-pepper', 'bell-pepper': 'bell-pepper',
+          scallion: 'green-onion', 'spring-onion': 'green-onion',
+          maida: 'all-purpose-flour', 'all-purpose': 'all-purpose-flour'
+        };
+        const s = singularize(word);
+        return map[s] ?? s;
+      };
+
+      const tokenize = (normalized: string): string[] => {
+        const ignore = new Set(['and','or','with','of','the','a','an','to','for']);
+        return normalized
+          .split(/\s+/)
+          .map(w => w.trim())
+          .filter(w => w.length > 2 && !ignore.has(w))
+          .map(canonicalize);
+      };
+
+      // Strict matching: exact token equality or full phrase match on word boundaries
       const ingredientsMatch = (recipeIngredient: string, detectedIngredient: string): boolean => {
-        const recipeNormalized = normalizeIngredient(recipeIngredient);
-        const detectedNormalized = normalizeIngredient(detectedIngredient);
-        
-        // Direct match after normalization
-        if (recipeNormalized.includes(detectedNormalized) || detectedNormalized.includes(recipeNormalized)) {
-          return true;
+        const recipeNorm = normalizeIngredient(recipeIngredient);
+        const detectedNorm = normalizeIngredient(detectedIngredient);
+
+        // Full phrase match using word boundaries to avoid egg vs eggplant
+        if (detectedNorm.length >= 3) {
+          const phraseRe = new RegExp(`(^|\\s)${detectedNorm.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}(?=\\s|$)`);
+          if (phraseRe.test(recipeNorm)) return true;
         }
-        
-        // Word-level matching for compound ingredients
-        const ignoreWords = ['and', 'or', 'with', 'of', 'the', 'a', 'an', 'to', 'for'];
-        const recipeWords = recipeNormalized.split(/\s+/).filter(w => w.length > 2 && !ignoreWords.includes(w));
-        const detectedWords = detectedNormalized.split(/\s+/).filter(w => w.length > 2 && !ignoreWords.includes(w));
-        
-        // Must match at least one significant word
-        return recipeWords.some(rw => 
-          detectedWords.some(dw => {
-            // Match if words are very similar (at least 80% of shorter word matches)
-            const minLen = Math.min(rw.length, dw.length);
-            return (rw.includes(dw) || dw.includes(rw)) && minLen >= 3;
-          })
-        );
+
+        const recipeTokens = new Set(tokenize(recipeNorm));
+        const detectedTokens = tokenize(detectedNorm);
+
+        // At least one token must match exactly
+        return detectedTokens.some(t => recipeTokens.has(t));
       };
 
       // Filter and score recipes based on ingredient matches
