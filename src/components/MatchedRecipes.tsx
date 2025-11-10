@@ -41,49 +41,66 @@ export const MatchedRecipes = ({ detectedIngredients }: MatchedRecipesProps) => 
 
       if (error) throw error;
 
+      // Normalize ingredient names for better matching
+      const normalizeIngredient = (ingredient: string): string => {
+        return ingredient
+          .toLowerCase()
+          .replace(/[^\w\s]/g, '') // Remove punctuation
+          .replace(/\b(chopped|diced|sliced|minced|grated|fresh|dried|ground|whole)\b/g, '') // Remove common modifiers
+          .replace(/\b\d+\s*(g|kg|ml|l|cup|cups|tablespoon|tablespoons|teaspoon|teaspoons|tbsp|tsp|oz|lb)\b/g, '') // Remove measurements
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+      };
+
       // Helper function to check if ingredients match
       const ingredientsMatch = (recipeIngredient: string, detectedIngredient: string): boolean => {
-        const recipeLower = recipeIngredient.toLowerCase();
-        const detectedLower = detectedIngredient.toLowerCase();
+        const recipeNormalized = normalizeIngredient(recipeIngredient);
+        const detectedNormalized = normalizeIngredient(detectedIngredient);
         
-        // Direct substring match (covers cases like "chicken" in "800g chicken breast")
-        if (recipeLower.includes(detectedLower) || detectedLower.includes(recipeLower)) {
+        // Direct match after normalization
+        if (recipeNormalized.includes(detectedNormalized) || detectedNormalized.includes(recipeNormalized)) {
           return true;
         }
         
-        // Word-level matching for better accuracy
-        const recipeWords = recipeLower.split(/[\s,]+/);
-        const detectedWords = detectedLower.split(/[\s,]+/);
+        // Word-level matching for compound ingredients
+        const ignoreWords = ['and', 'or', 'with', 'of', 'the', 'a', 'an', 'to', 'for'];
+        const recipeWords = recipeNormalized.split(/\s+/).filter(w => w.length > 2 && !ignoreWords.includes(w));
+        const detectedWords = detectedNormalized.split(/\s+/).filter(w => w.length > 2 && !ignoreWords.includes(w));
         
-        // Check if any significant words match (ignore common words)
-        const ignoreWords = ['and', 'or', 'with', 'of', 'the', 'a', 'an'];
-        const recipeSignificant = recipeWords.filter(w => w.length > 2 && !ignoreWords.includes(w));
-        const detectedSignificant = detectedWords.filter(w => w.length > 2 && !ignoreWords.includes(w));
-        
-        return recipeSignificant.some(rw => 
-          detectedSignificant.some(dw => rw.includes(dw) || dw.includes(rw))
+        // Must match at least one significant word
+        return recipeWords.some(rw => 
+          detectedWords.some(dw => {
+            // Match if words are very similar (at least 80% of shorter word matches)
+            const minLen = Math.min(rw.length, dw.length);
+            return (rw.includes(dw) || dw.includes(rw)) && minLen >= 3;
+          })
         );
       };
 
-      // Filter recipes that contain any of the detected ingredients
-      const matchedRecipes = (data as Recipe[]).filter((recipe) =>
-        recipe.ingredients.some((ingredient) =>
-          detectedIngredients.some((detected) =>
-            ingredientsMatch(ingredient, detected)
-          )
-        )
-      );
+      // Filter and score recipes based on ingredient matches
+      const matchedRecipes = (data as Recipe[])
+        .map((recipe) => {
+          const matchedIngredients = recipe.ingredients.filter((ingredient) =>
+            detectedIngredients.some((detected) => ingredientsMatch(ingredient, detected))
+          );
+          
+          return {
+            ...recipe,
+            matchCount: matchedIngredients.length,
+            matchedIngredients
+          };
+        })
+        .filter((recipe) => recipe.matchCount > 0) // Only include recipes with at least one match
+        .sort((a, b) => b.matchCount - a.matchCount); // Sort by number of matches
 
-      // Sort by number of matching ingredients (most matches first)
-      return matchedRecipes.sort((a, b) => {
-        const aMatches = a.ingredients.filter((ing) =>
-          detectedIngredients.some((det) => ingredientsMatch(ing, det))
-        ).length;
-        const bMatches = b.ingredients.filter((ing) =>
-          detectedIngredients.some((det) => ingredientsMatch(ing, det))
-        ).length;
-        return bMatches - aMatches;
-      });
+      console.log('Detected ingredients:', detectedIngredients);
+      console.log('Matched recipes:', matchedRecipes.map(r => ({
+        title: r.title,
+        matchCount: r.matchCount,
+        matchedIngredients: r.matchedIngredients
+      })));
+
+      return matchedRecipes;
     },
     enabled: detectedIngredients.length > 0,
   });
