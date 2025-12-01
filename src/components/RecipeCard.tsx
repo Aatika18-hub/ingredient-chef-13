@@ -1,8 +1,10 @@
 import { Clock, Users, ChefHat } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FavoriteButton } from "./FavoriteButton";
 
 interface RecipeCardProps {
+  id?: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -18,6 +20,7 @@ interface RecipeCardProps {
 }
 
 export const RecipeCard = ({
+  id,
   title,
   description,
   imageUrl,
@@ -71,6 +74,7 @@ export const RecipeCard = ({
       onClick={onClick}
     >
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/5 to-accent/5">
+        {id && <FavoriteButton recipeId={id} />}
         <img
           src={displayImageUrl}
           alt={`${title} - ${category} recipe photo`}
@@ -85,7 +89,7 @@ export const RecipeCard = ({
         <div className="absolute top-3 right-3">
           <Badge className={getDifficultyColor(difficulty)}>{difficulty}</Badge>
         </div>
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-12 left-3">
           <Badge className="bg-primary text-primary-foreground">{category}</Badge>
         </div>
       </div>
