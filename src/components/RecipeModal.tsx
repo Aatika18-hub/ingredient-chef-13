@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ShareButtons } from "./ShareButtons";
+import { RatingStars } from "./RatingStars";
 
 interface Recipe {
   id: string;
@@ -101,8 +103,16 @@ export const RecipeModal = ({ recipe, isOpen, onClose }: RecipeModalProps) => {
 
         <ScrollArea className="max-h-[calc(90vh-16rem)] px-6 pb-6">
           <DialogHeader className="mb-4">
-            <DialogTitle className="text-3xl">{recipe.title}</DialogTitle>
-            <p className="text-muted-foreground mt-2">{recipe.description}</p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <DialogTitle className="text-3xl mb-2">{recipe.title}</DialogTitle>
+                <p className="text-muted-foreground">{recipe.description}</p>
+              </div>
+              <ShareButtons recipeTitle={recipe.title} recipeDescription={recipe.description} />
+            </div>
+            <div className="mt-4">
+              <RatingStars recipeId={recipe.id} size="lg" />
+            </div>
           </DialogHeader>
 
           <div className="flex items-center gap-6 mb-6 text-sm text-muted-foreground">

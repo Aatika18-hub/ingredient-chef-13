@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { RecipeCard } from "./RecipeCard";
 import { RecipeModal } from "./RecipeModal";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Heart } from "lucide-react";
 
 interface Recipe {
   id: string;
@@ -28,6 +29,48 @@ interface Recipe {
 export const RecipeGrid = () => {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+        await loadFavorites(session.user.id);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setUserId(session.user.id);
+        loadFavorites(session.user.id);
+      } else {
+        setUserId(null);
+        setFavorites([]);
+        setShowFavoritesOnly(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadFavorites = async (uid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("recipe_id")
+        .eq("user_id", uid);
+
+      if (error) throw error;
+      setFavorites(data?.map((fav) => fav.recipe_id) || []);
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+    }
+  };
 
   const { data: recipes, isLoading } = useQuery({
     queryKey: ["recipes"],
@@ -42,13 +85,17 @@ export const RecipeGrid = () => {
     },
   });
 
-  const filteredRecipes = recipes?.filter(
-    (recipe) =>
+  const filteredRecipes = recipes?.filter((recipe) => {
+    const matchesSearch =
       recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.ingredients.some((ing) => ing.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      recipe.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      recipe.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesFavorites = !showFavoritesOnly || favorites.includes(recipe.id);
+
+    return matchesSearch && matchesFavorites;
+  });
 
   return (
     <section className="py-16 bg-muted/30" id="recipes">
@@ -60,7 +107,7 @@ export const RecipeGrid = () => {
           </p>
 
           <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
+            <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
@@ -70,6 +117,18 @@ export const RecipeGrid = () => {
                 className="pl-10 h-12"
               />
             </div>
+            {userId && (
+              <div className="flex justify-center">
+                <Button
+                  variant={showFavoritesOnly ? "default" : "outline"}
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  className="gap-2"
+                >
+                  <Heart className={`w-4 h-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                  {showFavoritesOnly ? "Show All Recipes" : "Show Favorites Only"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -83,6 +142,7 @@ export const RecipeGrid = () => {
             {filteredRecipes?.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
+                id={recipe.id}
                 title={recipe.title}
                 description={recipe.description || ""}
                 imageUrl={recipe.image_url}

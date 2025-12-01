@@ -151,6 +151,7 @@ export const MatchedRecipes = ({ detectedIngredients }: MatchedRecipesProps) => 
             {recipes.slice(0, 6).map((recipe) => (
               <RecipeCard
                 key={recipe.id}
+                id={recipe.id}
                 title={recipe.title}
                 description={recipe.description || ""}
                 imageUrl={recipe.image_url}
