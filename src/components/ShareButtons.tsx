@@ -11,19 +11,21 @@ import { toast } from "@/hooks/use-toast";
 interface ShareButtonsProps {
   recipeTitle: string;
   recipeDescription: string;
+  recipeId: string;
 }
 
-export const ShareButtons = ({ recipeTitle, recipeDescription }: ShareButtonsProps) => {
-  const currentUrl = window.location.href;
+export const ShareButtons = ({ recipeTitle, recipeDescription, recipeId }: ShareButtonsProps) => {
+  const baseUrl = window.location.origin + window.location.pathname;
+  const recipeUrl = `${baseUrl}?recipe=${recipeId}`;
 
   const shareToWhatsApp = () => {
-    const text = `Check out this recipe: ${recipeTitle}\n${recipeDescription}\n\n${currentUrl}`;
+    const text = `Check out this recipe: ${recipeTitle}\n${recipeDescription}\n\n${recipeUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, "_blank");
   };
 
   const shareToInstagram = () => {
-    const text = `Check out this recipe: ${recipeTitle}\n${recipeDescription}\n\n${currentUrl}`;
+    const text = `Check out this recipe: ${recipeTitle}\n${recipeDescription}\n\n${recipeUrl}`;
     
     navigator.clipboard.writeText(text).then(() => {
       toast({
