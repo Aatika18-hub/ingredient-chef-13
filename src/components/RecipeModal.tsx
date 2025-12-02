@@ -108,7 +108,7 @@ export const RecipeModal = ({ recipe, isOpen, onClose }: RecipeModalProps) => {
                 <DialogTitle className="text-3xl mb-2">{recipe.title}</DialogTitle>
                 <p className="text-muted-foreground">{recipe.description}</p>
               </div>
-              <ShareButtons recipeTitle={recipe.title} recipeDescription={recipe.description} />
+              <ShareButtons recipeTitle={recipe.title} recipeDescription={recipe.description} recipeId={recipe.id} />
             </div>
             <div className="mt-4">
               <RatingStars recipeId={recipe.id} size="lg" />
