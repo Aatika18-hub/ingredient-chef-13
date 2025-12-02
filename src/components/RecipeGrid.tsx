@@ -85,13 +85,71 @@ export const RecipeGrid = () => {
     },
   });
 
-  const filteredRecipes = recipes?.filter((recipe) => {
-    const matchesSearch =
-      recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recipe.ingredients.some((ing) => ing.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      recipe.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Helper function to normalize ingredient text for better matching
+  const normalizeIngredient = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[\d½¼¾⅓⅔⅛⅜⅝⅞]+/g, '') // Remove numbers and fractions
+      .replace(/\b(cup|cups|tbsp|tsp|tablespoon|teaspoon|oz|ounce|lb|pound|g|gram|kg|ml|liter|litre|piece|pieces|slice|slices|clove|cloves|bunch|bunches|can|cans|package|pkg|pinch|dash|to taste|large|medium|small|fresh|dried|chopped|minced|diced|sliced|grated|crushed|ground|whole|boneless|skinless|raw|cooked|optional)\b/gi, '')
+      .replace(/[^a-z\s]/g, '')
+      .trim();
+  };
 
+  // Helper to get canonical ingredient names (synonyms)
+  const getCanonicalName = (ingredient: string): string => {
+    const synonyms: Record<string, string> = {
+      'cilantro': 'coriander', 'coriander': 'coriander',
+      'chilli': 'chili', 'chili': 'chili', 'chile': 'chili',
+      'capsicum': 'bell pepper', 'bell pepper': 'bell pepper',
+      'aubergine': 'eggplant', 'eggplant': 'eggplant',
+      'courgette': 'zucchini', 'zucchini': 'zucchini',
+      'prawns': 'shrimp', 'shrimp': 'shrimp',
+      'spring onion': 'green onion', 'scallion': 'green onion', 'green onion': 'green onion',
+    };
+    return synonyms[ingredient] || ingredient;
+  };
+
+  // Tokenize and check if search term matches any ingredient word
+  const ingredientMatchesSearch = (ingredient: string, searchTerm: string): boolean => {
+    const normalizedIng = normalizeIngredient(ingredient);
+    const normalizedSearch = normalizeIngredient(searchTerm);
+    
+    if (!normalizedSearch) return false;
+    
+    // Direct inclusion check
+    if (normalizedIng.includes(normalizedSearch)) return true;
+    
+    // Tokenize and check individual words
+    const ingTokens = normalizedIng.split(/\s+/).filter(t => t.length > 1);
+    const searchTokens = normalizedSearch.split(/\s+/).filter(t => t.length > 1);
+    
+    // Check if any search token matches any ingredient token (with canonical names)
+    return searchTokens.some(searchToken => {
+      const canonicalSearch = getCanonicalName(searchToken);
+      return ingTokens.some(ingToken => {
+        const canonicalIng = getCanonicalName(ingToken);
+        return canonicalIng.includes(canonicalSearch) || 
+               canonicalSearch.includes(canonicalIng) ||
+               ingToken.startsWith(searchToken) ||
+               searchToken.startsWith(ingToken);
+      });
+    });
+  };
+
+  const filteredRecipes = recipes?.filter((recipe) => {
+    const searchLower = searchQuery.toLowerCase();
+    
+    const matchesTitle = recipe.title.toLowerCase().includes(searchLower);
+    const matchesDescription = recipe.description?.toLowerCase().includes(searchLower);
+    const matchesTags = recipe.tags?.some((tag) => tag.toLowerCase().includes(searchLower));
+    const matchesCategory = recipe.category?.toLowerCase().includes(searchLower);
+    
+    // Enhanced ingredient matching
+    const matchesIngredients = recipe.ingredients?.some((ing) => 
+      ingredientMatchesSearch(ing, searchQuery)
+    );
+
+    const matchesSearch = matchesTitle || matchesDescription || matchesTags || matchesCategory || matchesIngredients;
     const matchesFavorites = !showFavoritesOnly || favorites.includes(recipe.id);
 
     return matchesSearch && matchesFavorites;
