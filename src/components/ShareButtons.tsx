@@ -15,8 +15,7 @@ interface ShareButtonsProps {
 }
 
 export const ShareButtons = ({ recipeTitle, recipeDescription, recipeId }: ShareButtonsProps) => {
-  const baseUrl = window.location.origin + window.location.pathname;
-  const recipeUrl = `${baseUrl}?recipe=${recipeId}`;
+  const recipeUrl = `${window.location.origin}/?recipe=${recipeId}`;
 
   const shareToWhatsApp = () => {
     const text = `Check out this recipe: ${recipeTitle}\n${recipeDescription}\n\n${recipeUrl}`;
