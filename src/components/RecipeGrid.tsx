@@ -5,7 +5,14 @@ import { RecipeCard } from "./RecipeCard";
 import { RecipeModal } from "./RecipeModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Heart } from "lucide-react";
+import { Search, Heart, Filter } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Recipe {
   id: string;
@@ -26,9 +33,25 @@ interface Recipe {
   calories?: number;
 }
 
+const CATEGORIES = [
+  "All",
+  "Appetizer",
+  "Breakfast", 
+  "Chinese",
+  "Dessert",
+  "Indian",
+  "Italian",
+  "Japanese",
+  "Main Course",
+  "Mexican",
+  "Salad",
+  "Snack",
+];
+
 export const RecipeGrid = () => {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -151,8 +174,9 @@ export const RecipeGrid = () => {
 
     const matchesSearch = matchesTitle || matchesDescription || matchesTags || matchesCategory || matchesIngredients;
     const matchesFavorites = !showFavoritesOnly || favorites.includes(recipe.id);
+    const matchesCategoryFilter = selectedCategory === "All" || recipe.category === selectedCategory;
 
-    return matchesSearch && matchesFavorites;
+    return matchesSearch && matchesFavorites && matchesCategoryFilter;
   });
 
   return (
@@ -164,16 +188,31 @@ export const RecipeGrid = () => {
             Discover our most popular recipes that our community loves
           </p>
 
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search recipes by name, ingredient, or tag..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12"
-              />
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search recipes by name, ingredient, or tag..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-12"
+                />
+              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full sm:w-[180px] h-12">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {userId && (
               <div className="flex justify-center">
