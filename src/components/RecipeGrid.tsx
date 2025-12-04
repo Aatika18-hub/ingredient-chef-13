@@ -100,11 +100,13 @@ export const RecipeGrid = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recipes")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (error) throw error;
-      return data as Recipe[];
+      
+      // Shuffle recipes to mix categories
+      const shuffled = [...(data || [])].sort(() => Math.random() - 0.5);
+      return shuffled as Recipe[];
     },
   });
 
